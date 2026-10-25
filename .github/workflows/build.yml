@@ -1,0 +1,60 @@
+name: Build firmware
+
+on:
+  push:
+    branches: [r01-calibration-30]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Telink tc32 toolchain
+        id: tc32
+        uses: actions/cache@v4
+        with:
+          path: /opt/tc32
+          key: tc32-gcc-v2.0
+
+      - name: Install Telink tc32 toolchain
+        if: steps.tc32.outputs.cache-hit != 'true'
+        run: |
+          curl -sSL -o tc32.tar.bz2 https://shyboy.oss-cn-shenzhen.aliyuncs.com/readonly/tc32_gcc_v2.0.tar.bz2
+          echo "33b854be3e3db3dba4b4dacdda2cd4ea1c94dfd4d562864a095956de7991b430  tc32.tar.bz2" | sha256sum -c
+          sudo tar -xjf tc32.tar.bz2 -C /opt
+
+      - name: Build
+        run: |
+          make clean
+          make bootloader -f makefile.bootloader
+          make clean
+          make -f makefile
+
+      - name: Version
+        id: ver
+        run: |
+          f=$(ls bin/tuya_thermostat_zrd_V*.bin)
+          v=$(basename "$f" .bin | sed 's/tuya_thermostat_zrd_//')
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ steps.ver.outputs.version }}
+          path: |
+            bin/*.zigbee
+            bin/tuya_thermostat_zrd_V*.bin
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${{ steps.ver.outputs.version }}-r01cal"
+          gh release view "$tag" >/dev/null 2>&1 || \
+            gh release create "$tag" --target "$GITHUB_SHA" --title "$tag" \
+              --notes "Build of ${GITHUB_SHA::7}: r01 calibration -30..+30 (z2m shows -3.0 for -30)."
+          gh release upload "$tag" bin/*.zigbee bin/tuya_thermostat_zrd_V*.bin --clobber
