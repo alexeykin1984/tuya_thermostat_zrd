@@ -15,8 +15,8 @@
 #define R01_HEAT_PROTECT_MAX        7000        // * 100
 #define R01_DEADZONE_MIN            1
 #define R01_DEADZONE_MAX            5
-#define R01_CALIBRATION_MIN        -90          // * 10
-#define R01_CALIBRATION_MAX         90          // * 10
+#define R01_CALIBRATION_MIN        -30          // whole °C (local patch: old 2k floor sensor needs -30)
+#define R01_CALIBRATION_MAX         30          // whole °C
 
 //data_point_st_t data_point_model1[DP_IDX_MAXNUM];
 
@@ -68,7 +68,7 @@ data_point_st_t *init_datapoint_model1() {
     data_point_model_common[DP_IDX_CALIBRATION].id = DP_TYPE1_ID_1B;
     data_point_model_common[DP_IDX_CALIBRATION].type = DP_VAL;
     data_point_model_common[DP_IDX_CALIBRATION].len = 4;
-    data_point_model_common[DP_IDX_CALIBRATION].divisor = -10;
+    data_point_model_common[DP_IDX_CALIBRATION].divisor = 1;      // local patch: ZCL value = whole °C (z2m shows -3.0 for -30)
     data_point_model_common[DP_IDX_CALIBRATION].remote_cmd = remote_cmd_temp_calibration_1;
     data_point_model_common[DP_IDX_CALIBRATION].local_cmd = local_cmd_temp_calibration_1;
     data_point_model_common[DP_IDX_CALIBRATION].arg1 = R01_CALIBRATION_MIN;
