@@ -66,7 +66,8 @@ jobs:
               "fileName": name,
               "fileVersion": ver,
               "fileSize": len(data),
-              "url": f"https://github.com/${{ github.repository }}/releases/download/{tag}/{name}",
+              # raw.githubusercontent.com: github.com does not resolve inside the z2m container
+              "url": f"https://raw.githubusercontent.com/${{ github.repository }}/ota/{name}",
               "imageType": itype,
               "manufacturerCode": manuf,
               "sha512": hashlib.sha512(data).hexdigest(),
@@ -87,3 +88,13 @@ jobs:
               --notes "Build of ${GITHUB_SHA::7}: r01 calibration -30..+30 (z2m shows -3.0 for -30)."
           gh release upload "$tag" bin/*.zigbee bin/tuya_thermostat_zrd_V*.bin bin/index.json --clobber
           gh release edit "$tag" --latest
+
+      - name: Publish to ota branch (z2m index + image)
+        run: |
+          mkdir ota && cp bin/index.json bin/6565-*.zigbee ota/
+          cd ota
+          git init -q -b ota
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add . && git commit -q -m "OTA ${{ steps.ver.outputs.version }} (${GITHUB_SHA::7})"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ota
