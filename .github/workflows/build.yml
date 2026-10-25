@@ -30,6 +30,8 @@ jobs:
 
       - name: Build
         run: |
+          # upstream builds on Windows; the folder is "bootLoader" but makefiles use "bootloader"
+          [ -e src/bootloader ] || ln -s bootLoader src/bootloader
           make clean
           make bootloader -f makefile.bootloader
           make clean
