@@ -51,6 +51,32 @@ jobs:
             bin/*.zigbee
             bin/tuya_thermostat_zrd_V*.bin
 
+      - name: Make z2m OTA index
+        run: |
+          tag="${{ steps.ver.outputs.version }}-r01cal"
+          python3 - "$tag" <<'EOF'
+          import glob, hashlib, json, os, struct, sys
+          tag = sys.argv[1]
+          f = glob.glob("bin/6565-*.zigbee")[0]
+          data = open(f, "rb").read()
+          manuf, itype, ver = struct.unpack_from("<HHI", data, 10)
+          header = data[20:52].split(b"\0")[0].decode(errors="ignore")
+          name = os.path.basename(f)
+          index = [{
+              "fileName": name,
+              "fileVersion": ver,
+              "fileSize": len(data),
+              "url": f"https://github.com/${{ github.repository }}/releases/download/{tag}/{name}",
+              "imageType": itype,
+              "manufacturerCode": manuf,
+              "sha512": hashlib.sha512(data).hexdigest(),
+              "otaHeaderString": header,
+              "modelId": "Tuya_Thermostat_r01",
+          }]
+          json.dump(index, open("bin/index.json", "w"), indent=2)
+          print(json.dumps(index, indent=2))
+          EOF
+
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -59,4 +85,5 @@ jobs:
           gh release view "$tag" >/dev/null 2>&1 || \
             gh release create "$tag" --target "$GITHUB_SHA" --title "$tag" \
               --notes "Build of ${GITHUB_SHA::7}: r01 calibration -30..+30 (z2m shows -3.0 for -30)."
-          gh release upload "$tag" bin/*.zigbee bin/tuya_thermostat_zrd_V*.bin --clobber
+          gh release upload "$tag" bin/*.zigbee bin/tuya_thermostat_zrd_V*.bin bin/index.json --clobber
+          gh release edit "$tag" --latest
