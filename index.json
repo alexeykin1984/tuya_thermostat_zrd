@@ -1,0 +1,13 @@
+[
+  {
+    "fileName": "6565-0391-10243001-tuya_thermostat_zrd.zigbee",
+    "fileVersion": 270807041,
+    "fileSize": 265378,
+    "url": "https://raw.githubusercontent.com/alexeykin1984/tuya_thermostat_zrd/ota/6565-0391-10243001-tuya_thermostat_zrd.zigbee",
+    "imageType": 913,
+    "manufacturerCode": 25957,
+    "sha512": "1c4d6c3ac52c2d07aa8c6d37cb2c4c539300ed1bc3b2a10b07932904aa1b51bafe50db0a8324123efad4d970504c850107b030a902cfbce090ca8686c53c4604",
+    "otaHeaderString": "",
+    "modelId": "Tuya_Thermostat_r01"
+  }
+]
